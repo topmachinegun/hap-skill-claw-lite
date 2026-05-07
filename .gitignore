@@ -1,0 +1,31 @@
+# 敏感凭据 —— 绝对不能入库
+config.toml
+apps.toml
+hap-config.local.json
+*.token.json
+tokens/*.json
+
+# 临时文件
+.tmp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.venv/
+venv/
+
+# IDE / 编辑器
+.DS_Store
+.qoder/
+.idea/
+.vscode/
+*.sublime-*
+
+# 日志
+*.log

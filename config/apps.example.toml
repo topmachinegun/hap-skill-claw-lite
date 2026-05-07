@@ -1,0 +1,14 @@
+# 应用认证配置
+# 
+# 复制此文件为 apps.toml 并填入真实凭据：
+#   cp config/apps.example.toml ~/.config/hap-skill-claw-lite/apps.toml
+#
+# 决策逻辑（§7）：
+#   查 apps.toml → 有 appkey→Appkey+Sign（优先），无 appkey→OAuth MCP，无记录→看 Broker
+
+[apps."<appId>"]
+# name = "ClawCRM"
+# 填入 appkey 即启用 Appkey+Sign 模式（优先）
+# appkey = "<your-appkey>"
+# sign = "<your-sign>"
+# 不填 appkey 则走 OAuth MCP（Broker 提供 token）
