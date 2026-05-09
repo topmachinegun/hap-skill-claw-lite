@@ -90,7 +90,12 @@ result = await client.call_tool("get_record_list", {
 特性：
 - 自动处理 MCP session 管理（initialize → tools/list → tools/call）
 - 自动剥离 MCP content 包装，返回纯 `data`
-- 支持 Streamable HTTP 传输（`streamablehttp_client`）
+- 基于 urllib 裸 JSON-RPC POST，不依赖第三方 MCP SDK
+
+> **关键陷阱**：Python MCP SDK 的 `streamablehttp_client` 仅适用于 `get_time` 等简单工具调用。
+> 业务工具（`get_org_list`、`get_record_list`、`get_app_worksheets_list` 等）必须使用本模块的 `MCPClient`，
+> 否则 `streamablehttp_client` 的 SSE/协议处理不完整，导致 `10001 Http Headers verification failed`。
+> 详见 §5.12。
 
 ### 1.2 api_client.py — V3 REST API 客户端
 
@@ -436,6 +441,15 @@ OAuth App 的 Bearer Token 只对**创建该 App 时配置的域名**有效：
 
 **兜底方案**：走常规查询 `get_app_worksheets_list` → `get_record_list` → `get_record_details`。
 
+### 5.12 Python MCP SDK 的 streamablehttp_client 不适用于业务工具
+
+Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握手，对需要完整 JSON-RPC 响应解析的业务工具支持不完整。
+
+- `get_time` 等简单工具 → `streamablehttp_client` 可用
+- 业务工具（`get_org_list`、`get_app_list`、`get_record_list`、`get_worksheet_structure` 等）→ **必须使用本 skill 的 `MCPClient`**（`skills/hap_app_access/src/mcp_client.py`）
+
+误用 `streamablehttp_client` 调业务工具 → `10001 Http Headers verification failed`。根因是 SSE stream 的 JSON-RPC 响应解析不完整，导致 HAP 服务端收到的请求 headers 残缺。
+
 ### 5.11 MDAccountLogin「服务异常」≠ 服务端故障
 
 这是明道云反刷库的**统一脱敏响应**。真实原因概率降序：
@@ -457,7 +471,7 @@ OAuth App 的 Bearer Token 只对**创建该 App 时配置的域名**有效：
 | `-1` | 通用失败 | 查看 `error_msg` | 按 error_msg 排查 |
 | `4` | 权限不足 | 当前身份无该操作权限 | 检查授权类型和用户权限 |
 | `10` | 参数错误 | 参数缺失或格式错误 | 核对参数名和值格式 |
-| `10001` | HTTP Headers 验证失败 | 域名不在白名单 **或参数缺失/错误** | 确认域名匹配；核对参数名与 schema |
+| `10001` | HTTP Headers 验证失败 | 域名不在白名单 / 参数缺失或错误 / **误用 streamablehttp_client** | 确认域名匹配；核对参数名与 schema；**业务工具必须用 MCPClient（§5.12）** |
 | `600101` | 授权已失效 | Bearer token 过期 | 等待 Broker 自动刷新或手动触发刷新 |
 | `600100` | token 无效/缺失 | token 为空或格式错误 | 检查 token 来源 |
 
