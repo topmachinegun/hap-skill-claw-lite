@@ -10,6 +10,9 @@
 # 巡检间隔（分钟）。broker 每隔这段时间扫一遍所有 profile，决定是否刷新。
 check_interval_minutes = 30
 
+# 同步间隔（小时）。本地 sync-broker 每隔这段时间从 152 拉一次 token。
+check_interval_hours = 2
+
 # 刷新阈值（小时）。token 距离过期 <= 这个值时触发刷新。
 # token 实际 TTL 约 24h；默认 4h 留足边缘 window，避免刚好卡过期。
 refresh_before_expire_hours = 4.0

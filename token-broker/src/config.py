@@ -35,6 +35,7 @@ class Profile:
 @dataclass
 class Config:
     check_interval_minutes: int = 30
+    check_interval_hours: int = 2
     refresh_before_expire_hours: float = 4.0
     max_consecutive_failures: int = 5
     md_generate_bin: Path = DEFAULT_MD_GEN_BIN
