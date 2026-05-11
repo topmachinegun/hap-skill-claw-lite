@@ -252,7 +252,7 @@ OpenClaw 等平台通过 GitHub URL 引用技能：
 https://github.com/topmachinegun/<repo-name>
 ```
 
-已有 L3 技能示例：`crm-project-review`、`crm_leads_sync`。
+已有 L3 技能示例：`crm-project-review`。
 
 ### 8.3 本仓库中的参考示例
 

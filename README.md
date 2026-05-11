@@ -111,7 +111,6 @@ hap-skill-claw-lite/
 | `hap-mcp-usage` | MCP 配置自动化安装 | 独立使用 |
 | `hap-token-broker` | L1 独立分发 repo | 从本仓库 `token-broker/` 手动同步 |
 | `crm-project-review` | crm_project_review 分发版 | 从本仓库参考示例衍生 |
-| `crm_leads_sync` | CRM 线索同步（L3 业务技能） | 独立 L3 技能 |
 
 ## License
 
