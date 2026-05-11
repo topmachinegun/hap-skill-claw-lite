@@ -536,7 +536,7 @@ Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握�
 ## 9. 三层架构约定
 
 ```
-L1: 外部 Token 中控服务       Token 刷新与文件写入（不在本仓库）
+L1: token-broker/                Token 中控服务（源码在本仓库，独立 repo 分发）
          │
          │ 提供 token URL（文件接口）
          ▼
@@ -544,20 +544,25 @@ L2: skills/hap-app-access/ 本技能 — HAP 通用访问方法论 + 共享代�
          │
          │ 提供 MCP/V3 API 调用能力
          ▼
-L3: skills/crm_project_review/  业务技能 — CRM 项目评审
-    skills/...                   未来业务技能横向扩展
+L3: 独立 GitHub repo             业务技能（各自独立开发、独立分发）
+    skills/crm_project_review/   参考示例（本仓库内，分发版在独立 repo）
+    skills/hap-skill-creator/    脚手架 skill
 ```
 
 | 层 | 职责 | 不做什么 |
 |---|---|---|
-| L1 外部服务 | 服务器级 token 刷新、过期巡检 | 不涉及业务逻辑、不知道 HAP 应用结构 |
+| L1 Token Broker | 服务器级 token 刷新、过期巡检（源码在 `token-broker/`，运行时由外部进程管理） | 不涉及业务逻辑、不知道 HAP 应用结构 |
 | L2 hap-app-access | HAP 应用访问方法论、MCP/V3 API 调用、错误码/陷阱清单、共享 Python 模块 | 不管理 token 生成/刷新、不包含业务逻辑 |
 | L3 业务技能 | 具体业务逻辑、知识库检索、数据加工 | 不直接处理 MCP JSON-RPC、不管理凭据 |
 
 ---
 
-**技能版本**：v3.1.0
+**技能版本**：v3.2.0
 **适用范围**：明道云 HAP（SaaS / Nocoly / 私有部署）
+
+**v3.2.0 变更**：
+- 三层架构更新：L1 源码回归本仓库 `token-broker/`（运行时仍由外部进程管理），L3 改为独立 repo 分发
+- 添加 L3 开发规范与脚手架技能引用
 
 **v3.1.0 变更**：
 - Token 管理全面剥离，交由外部进程管理。本仓库不再包含 Token 刷新源码

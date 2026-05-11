@@ -3,6 +3,10 @@ name: crm_project_review
 description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进行结构化评审，涵盖项目阶段、ICP 匹配度、风险点、下一步动作和 SOP 偏离度五个维度，评审报告可选写回 ClawCRM 字段。当用户说"评估项目"、"项目跟进评审"、"ClawCRM 项目 AI 评审"、"帮我评 X 项目"、"review claw project"或需要基于明道云知识库做 CRM 项目健康度检查时触发。
 ---
 
+> **本技能为 L3 参考示例**，保留在 hap-skill-claw-lite monorepo 中供开发新 L3 技能时参考。
+> 分发版在独立 GitHub repo：[`hap-skill-crm-review`](https://github.com/topmachinegun/hap-skill-crm-review)。
+> 平台（如 OpenClaw）应引用独立 repo，而非本仓库中的此副本。
+
 # ClawCRM 项目评审
 
 基于跟进日志，对照明道云项目管理知识库对 ClawCRM 项目进行多维度评审，生成结构化评审报告，并可选写回项目记录。
@@ -31,10 +35,13 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 ### 三层架构中的位置
 
 本 skill 位于 L3（业务技能层），依赖关系：
-- **L1 外部服务**：提供 Token（不在本仓库）
+- **L1 Token Broker**：提供 Token（源码在本仓库 `token-broker/`，运行时由外部 Broker 进程管理）
 - **L2 hap-app-access**：提供访问方法论 + 共享 Python 模块（`skills/hap-app-access/`）
   - `token_reader.py`：读取 token 文件
   - `mcp_client.py`：MCP JSON-RPC 客户端
+
+> **分发**：本文件为参考示例。平台使用的分发版在独立 repo `hap-skill-crm-review`。
+> 开发新 L3 技能请参考 [L3 开发规范](../../docs/l3-development.md) 和使用 `hap-skill-creator` 脚手架。
 
 ## 3. 铁律（继承 hap-app-access §4.1）
 
@@ -199,6 +206,9 @@ python3 skills/crm_project_review/src/review_project.py \
 ## 10. Related
 
 - L2 `skills/hap_app_access/` — HAP 通用访问方法论 + 共享模块（本仓库）
+- [L3 开发规范](../../docs/l3-development.md) — 开发新 L3 技能的标准指南
+- `skills/hap-skill-creator/` — L3 脚手架 skill
+- 分发 repo：[`hap-skill-crm-review`](https://github.com/topmachinegun/hap-skill-crm-review)
 
 ---
 
