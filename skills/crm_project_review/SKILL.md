@@ -21,7 +21,7 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 
 | 项目 | 默认值 | 缺失时如何获取 |
 |---|---|---|
-| Token | **Token Broker 中控服务**（L1）自动管理。本 skill 通过 `token_reader.get_mcp_url("claw-crm")` 读取。不再使用 env `HAP_MCP_URL` 作为主路径。 | 确保 Broker 已部署：`systemctl status hap-token-broker && hap-token status`。刷新：`hap-token refresh claw-crm` |
+| Token | 由外部进程管理刷新。本 skill 通过 `token_reader.get_mcp_url("claw-crm")` 读取 token 文件。 | token 文件不存在或过期时联系管理员刷新 |
 | ClawCRM appId | `49392ae2-6aa0-4d69-b5e7-57d4fe3fc98e` | 无（硬编码默认值） |
 | 知识库 ID | `69ca75132970faa5ac6ce728`（"项目管理知识库"） | 调用 `get_app_knowledge_list(appId)` 重新选择 |
 | 项目工作表 | `69ca1fb1d128aadb0c749d49`（项目管理） | 固定锚点；如被 org 改名，`get_app_worksheets_list` 里选 name 含「项目管理」的那张，**不得**选「日报管理」「沟通」等别的表 |
@@ -31,9 +31,9 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 ### 三层架构中的位置
 
 本 skill 位于 L3（业务技能层），依赖关系：
-- **L1 Token Broker**：提供 Token（`token-broker/`）
+- **L1 外部服务**：提供 Token（不在本仓库）
 - **L2 hap-app-access**：提供访问方法论 + 共享 Python 模块（`skills/hap-app-access/`）
-  - `token_reader.py`：读取 Broker token
+  - `token_reader.py`：读取 token 文件
   - `mcp_client.py`：MCP JSON-RPC 客户端
 
 ## 3. 铁律（继承 hap-app-access §4.1）
@@ -62,7 +62,7 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 按此清单逐步执行：
 
 ```
-- [ ] S1 从 Token Broker 读取 MCP URL（通过 token_reader.get_mcp_url("claw-crm")）
+- [ ] S1 通过 token_reader.get_mcp_url("claw-crm") 读取 MCP URL
 - [ ] S2 initialize + tools/list，缓存以下工具的 schema
 - [ ] S3 定位 ClawCRM appId（用默认值或 get_org_list → get_app_list(org_id)）
 - [ ] S4 发现项目工作表 + 跟进字段
@@ -78,7 +78,7 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 
 | exit | error 字段 | 触发条件 | Agent 应答模板 |
 |---|---|---|---|
-| 2 | Token 不可用 | Broker token 文件不存在或已过期 | "Token Broker 未就绪，请检查：systemctl status hap-token-broker" |
+| 2 | Token 不可用 | Token 文件不存在或已过期 | "Token 不可用，请检查 token 文件或联系管理员刷新" |
 | 3 | `PROJECT_NOT_FOUND_IN_PROJECT_WS` | 项目管理工作表里没有匹配记录 | "项目「X」在 ClawCRM 的项目管理表里没有对应记录。请先在项目管理表登记该项目。" |
 | 4 | `EMPTY_FOLLOW_UP_LOG` | 两种合法来源均为空 | "项目「X」已登记但没有找到任何跟进日志。请先补录最新跟进日志再发起评审。" |
 
@@ -92,7 +92,7 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 ### 便捷方式：运行辅助脚本
 
 ```bash
-# 脚本自动从 Broker 读取 token，无需 --mcp-url
+# 脚本自动从 token 文件读取 token，无需 --mcp-url
 python3 skills/crm_project_review/src/review_project.py \
   --project "XYZ有限公司"
 
@@ -194,21 +194,22 @@ python3 skills/crm_project_review/src/review_project.py \
 | 多个 org 下都有名为 "CRM" 的应用 | 名称冲突 | 用 `appName.strip().lower() == "clawcrm"` 过滤 |
 | KB 命中结果跑题 | 检索词太直白 | 提取动作动词 + 行业术语 |
 | `update_record` 静默无效果 | `controlId` 错误 | 重新执行 `get_worksheet_structure` |
-| Token 过期 | Broker 守护进程停止了 | `hap-token refresh claw-crm` 或 `systemctl restart hap-token-broker` |
+| Token 过期 | 外部刷新进程未运行 | 联系管理员刷新 token |
 
 ## 10. Related
 
-- L1 `token-broker/` — Token 中控服务（本仓库）
 - L2 `skills/hap_app_access/` — HAP 通用访问方法论 + 共享模块（本仓库）
-- `hap-oauth-mcp` — Token 刷新后端（独立 skill）
 
 ---
 
-**技能版本**：v3.0.0
+**技能版本**：v3.1.0
 **适用范围**：明道云 HAP（SaaS）
 
+**v3.1.0 变更**：
+- L1 Token Broker 源码移出本仓库，token 由外部进程管理
+- 移除 Broker daemon 相关提示和命令
+
 **v3.0.0 变更**：
-- Token 管理全面剥离，统一走 L1 Token Broker + L2 token_reader
+- Token 管理全面剥离，统一走 L2 token_reader
 - 移除 `HAP_MCP_URL` env 作为主路径
 - 脚本改用 L2 共享模块（mcp_client.py + token_reader.py）
-- 三层架构整合：L1 (Broker) → L2 (hap-app-access) → L3 (本 skill)

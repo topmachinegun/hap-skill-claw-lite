@@ -1,6 +1,6 @@
 ---
 name: hap-app-access
-description: 【HAP 数据访问唯一入口】任何涉及明道云 HAP 数据查询、读取、写入、调用 HAP 接口 / API / MCP 的任务必须优先使用本技能（而非 hap-v3-api 或 hap-oauth-mcp）。覆盖应用级 Appkey+Sign 和个人级 OAuth Bearer 两种授权 × MCP 协议和 V3 REST API 两种路径的 2×2 完整矩阵。触发场景：查询 HAP 数据、读取明道云工作表、调用 HAP API、HAP MCP、HAP 接口调用、数据查询、跨应用数据访问、明道云知识库查询、收款账号查询等。Token 由 Broker 中控服务统一管理，本技能不管理 Token。
+description: 【HAP 数据访问唯一入口】任何涉及明道云 HAP 数据查询、读取、写入、调用 HAP 接口 / API / MCP 的任务必须优先使用本技能（而非 hap-v3-api 或 hap-oauth-mcp）。覆盖应用级 Appkey+Sign 和个人级 OAuth Bearer 两种授权 × MCP 协议和 V3 REST API 两种路径的 2×2 完整矩阵。触发场景：查询 HAP 数据、读取明道云工作表、调用 HAP API、HAP MCP、HAP 接口调用、数据查询、跨应用数据访问、明道云知识库查询、收款账号查询等。Token 由外部进程管理刷新，本技能不管理 Token。
 license: MIT
 ---
 
@@ -12,33 +12,30 @@ license: MIT
 
 本技能提供访问明道云（HAP）应用的**通用方法论**：两种授权类型 × 两种调用路径的完整矩阵，帮助 AI 快速判断和实施正确的访问方式。
 
-**本技能不管理 Token**：所有 Token 的生成、刷新、过期巡检由 L1 [hap-token-broker](../../token-broker/) 中控服务统一管理。本技能只负责"拿到 Token 后怎么用"。
+**本技能不管理 Token**：所有 Token 的生成、刷新、过期巡检由外部进程统一管理。本技能只负责"拿到 Token 后怎么用"。
 
 ---
 
 ## 0. Token 来源约定（必读）
 
-> **本 skill 不管理 token**。所有 Personal OAuth Bearer Token 由 **Token Broker 中控服务**（L1）提供。
+> **本 skill 不管理 token**。所有 Personal OAuth Bearer Token 由外部进程统一管理刷新。本 skill 只负责从 token 文件读取。
 
 ### 0.1 Token 文件位置
 
-Broker 守护进程将 Token 写入：
+Token 文件存储在：
 ```
-~/.local/share/hap-token-broker/tokens/<profile>.json
+.local/share/hap-token-broker/tokens/<profile>.json          # 项目内优先
+~/.local/share/hap-token-broker/tokens/<profile>.json         # fallback
 ```
 
-### 0.2 获取 Token URL（推荐方式）
+### 0.2 获取 Token URL
 
 ```bash
-# 方式 1：CLI
-hap-token get <profile>           # 打印完整 MCP URL
-hap-token get <profile> --check   # 同时校验过期
-
-# 方式 2：直读 JSON 文件
+# 直读 JSON 文件
 python3 -c "
 import json
 from pathlib import Path
-rec = json.loads(Path.home() / '.local/share/hap-token-broker/tokens/claw-crm.json').read_text())
+rec = json.loads(Path('.local/share/hap-token-broker/tokens/claw-crm.json').read_text())
 print(rec['url'])
 "
 ```
@@ -53,9 +50,9 @@ record = read_broker_token("claw-crm")   # -> TokenRecord
 url = get_mcp_url("claw-crm")            # -> "https://api2.mingdao.com/mcp?Authorization=Bearer%20..."
 ```
 
-### 0.4 发现 Broker 未运行时的行为
+### 0.4 Token 文件不存在时的行为
 
-**报错退出，决不尝试自己刷新**。Token 刷新是 Broker 的职责，本 skill 的模块在发现 Broker token 文件不存在时立即 `raise TokenNotFoundError`。
+**报错退出，决不尝试自己刷新**。Token 刷新是外部进程的职责，本 skill 的模块在发现 token 文件不存在时立即 `raise TokenNotFoundError`。
 
 ### 0.5 应用级 Appkey+Sign
 
@@ -108,7 +105,7 @@ data = client.get_record_list(worksheet_id="...", page_size=50, filter={...})
 
 仅用于应用级 Appkey+Sign 场景。Personal OAuth 场景**强制走 MCP 协议**（见 §2.3）。
 
-### 1.3 token_reader.py — Broker Token 读取器
+### 1.3 token_reader.py — Token 文件读取器
 
 ```python
 from skills.hap_app_access.src.token_reader import read_broker_token, get_mcp_url
@@ -124,9 +121,8 @@ url = get_mcp_url("claw-crm")
 ```
 
 行为：
-- 直读 `~/.local/share/hap-token-broker/tokens/<profile>.json`
+- 优先项目内 `.local/share/hap-token-broker/tokens/<profile>.json`，fallback `~/`
 - 文件不存在 → `TokenNotFoundError`
-- 不依赖 `hap-config.local.json`、不调 `md-generate-mcp-config`
 - 不尝试自己刷新
 
 ---
@@ -144,8 +140,8 @@ HAP 应用有且仅有两种授权类型：
 | 权限范围 | 应用内 API 开关控制的全部数据 | 当前登录用户在应用中可见的数据 |
 | 跨应用 | 只能访问所属应用 | 可跨应用访问用户有权限的所有应用 |
 | 适用场景 | 后台定时任务、服务间同步、脚本自动化 | 个人数据查询、以用户视角读写数据 |
-| 过期 | 不过期（除非在 HAP 后台重置） | 约 1 天，需要刷新（由 Token Broker 管理） |
-| Token 来源 | 配置文件/环境变量（业务 skill 自己管理） | **Token Broker 中控服务**（§0） |
+| 过期 | 不过期（除非在 HAP 后台重置） | 约 1 天，需要刷新（由外部进程管理） |
+| Token 来源 | 配置文件/环境变量（业务 skill 自己管理） | Token 文件（由外部进程管理刷新，§0） |
 
 **选择原则**：
 - 需要**无人值守运行** → 应用级（Appkey+Sign）
@@ -230,7 +226,24 @@ HAP-Sign: <Sign>
 
 #### Token 来源
 
-Token 由 **Token Broker 中控服务**统一管理（见 §0）。业务 skill 无需关心 Token 的获取和刷新。
+Token 由外部进程统一管理刷新（见 §0）。业务 skill 无需关心 Token 的获取和刷新。
+
+#### ⚠️ Claude Code MCP 兼容性（必读）
+
+**Claude Code 内置 MCP 客户端对 Bearer token 鉴权存在已知兼容性问题**：`mcp__HAP-Personal-MCP__get_time` 能正常调用，但业务工具（`get_org_list`、`get_record_list` 等）会返回 `600100 token无效或过期`，即使 token 完全有效。
+
+**根因**：Claude Code MCP HTTP 传输层与 `api.mingdao.com` Bearer token 校验存在细微不兼容。同一 URL、同一 token、同一参数，Python `urllib` 直连正常，Claude Code 内置 MCP 不行。
+
+**永久规则（不可绕过）**：
+
+> Personal MCP 业务工具调用**必须走 MCPClient 直连，禁止使用 `mcp__HAP-Personal-MCP__*` 工具（`get_time` 除外）。**
+>
+> 使用项目根目录的桥接脚本：
+> ```bash
+> python3 hap_personal_mcp.py <tool_name> '<json_args>'
+> ```
+>
+> 该脚本自动从 token 文件读取 token，完成 MCP 握手，走 `urllib` 直连调用。
 
 #### MCP 路径配置（AI 工具）
 
@@ -472,7 +485,7 @@ Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握�
 | `4` | 权限不足 | 当前身份无该操作权限 | 检查授权类型和用户权限 |
 | `10` | 参数错误 | 参数缺失或格式错误 | 核对参数名和值格式 |
 | `10001` | HTTP Headers 验证失败 | 域名不在白名单 / 参数缺失或错误 / **误用 streamablehttp_client** | 确认域名匹配；核对参数名与 schema；**业务工具必须用 MCPClient（§5.12）** |
-| `600101` | 授权已失效 | Bearer token 过期 | 等待 Broker 自动刷新或手动触发刷新 |
+| `600101` | 授权已失效 | Bearer token 过期 | 联系管理员刷新 token |
 | `600100` | token 无效/缺失 | token 为空或格式错误 | 检查 token 来源 |
 
 ### 10001 排错三步走（强制顺序）
@@ -490,16 +503,16 @@ Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握�
 ```
 需要访问 HAP 应用数据
 │
-├─ 1. 查 ~/.config/hap-skill-claw-lite/apps.toml
+├─ 1. 查 .config/hap-skill-claw-lite/apps.toml
 │   ├─ 有 appId 且配置了 appkey → Appkey+Sign（优先，权限更大）
 │   │   ├─ AI 对话操作 → MCP
 │   │   └─ 代码集成   → V3 API
 │   │
-│   └─ 有 appId 但无 appkey → OAuth MCP（走 Broker §0）
+│   └─ 有 appId 但无 appkey → OAuth MCP（走 §0 token 文件）
 │
 └─ 2. apps.toml 无记录
-    ├─ Broker 运行中 → OAuth MCP（走发现序列定位 appId）
-    └─ Broker 未运行 → 报告：需提供 appId + Appkey/Sign，或先启动 Token Broker
+    ├─ token 文件存在 → OAuth MCP（走发现序列定位 appId）
+    └─ token 文件不存在 → 报告：需提供 appId + Appkey/Sign，或先配置 token
 ```
 
 > **核心原则**：Appkey+Sign 权限更大、不过期、可走 V3 API（pageSize 上限 1000），因此优先。OAuth MCP 是通用兜底方案。
@@ -512,8 +525,7 @@ Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握�
 
 | 技能 | 用途 | 层级 |
 |------|------|------|
-| `hap-token-broker` (L1) | Token 中控服务 — 刷新、过期巡检、多 profile 管理 | 本仓库 `token-broker/` |
-| `hap-oauth-mcp` | OAuth 授权流程 + Token 刷新后端（被 Broker 调用） | 独立 skill |
+| `hap-oauth-mcp` | OAuth 授权流程 + Token 刷新后端 | 独立 skill |
 | `hap-mcp-usage` | MCP 配置的自动化安装（9 种 AI 工具平台） | 独立 skill |
 | `hap-v3-api` | V3 REST API 完整使用规范 | 独立 skill |
 | `hap-frontend-project` | 使用 HAP 作为后端搭建独立网站 | 独立 skill |
@@ -524,7 +536,7 @@ Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握�
 ## 9. 三层架构约定
 
 ```
-L1: token-broker/          独立部署的 Token 中控服务（systemd 守护进程）
+L1: 外部 Token 中控服务       Token 刷新与文件写入（不在本仓库）
          │
          │ 提供 token URL（文件接口）
          ▼
@@ -538,17 +550,21 @@ L3: skills/crm_project_review/  业务技能 — CRM 项目评审
 
 | 层 | 职责 | 不做什么 |
 |---|---|---|
-| L1 Token Broker | 服务器级 token 刷新、多 profile 管理、过期巡检 | 不涉及业务逻辑、不知道 HAP 应用结构 |
+| L1 外部服务 | 服务器级 token 刷新、过期巡检 | 不涉及业务逻辑、不知道 HAP 应用结构 |
 | L2 hap-app-access | HAP 应用访问方法论、MCP/V3 API 调用、错误码/陷阱清单、共享 Python 模块 | 不管理 token 生成/刷新、不包含业务逻辑 |
 | L3 业务技能 | 具体业务逻辑、知识库检索、数据加工 | 不直接处理 MCP JSON-RPC、不管理凭据 |
 
 ---
 
-**技能版本**：v3.0.0
+**技能版本**：v3.1.0
 **适用范围**：明道云 HAP（SaaS / Nocoly / 私有部署）
 
+**v3.1.0 变更**：
+- Token 管理全面剥离，交由外部进程管理。本仓库不再包含 Token 刷新源码
+- L1 Token Broker 源码移出本仓库，三层架构中 L1 改为外部服务
+- `token_reader.py` 路径和 API 不变
+
 **v3.0.0 变更**：
-- Token 管理全面剥离，交由 L1 Token Broker 中控服务
 - CLI `hap-access` 模式移除，替换为共享 Python 模块（`mcp_client` / `api_client` / `token_reader`）
 - 新增 §0「Token 来源约定」、§1「共享 Python 模块」、§9「三层架构约定」
 - 保留核心内容：授权类型、MCP 协议、错误码、陷阱清单
