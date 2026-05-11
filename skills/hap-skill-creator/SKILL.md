@@ -25,7 +25,7 @@ version: 1.0.0
 | 字段 | 说明 | 示例 |
 |------|------|------|
 | 技能名 | 英文 snake_case，建议 `hap_skill_<name>` 格式 | `crm_project_review` |
-| 分发 repo 名 | GitHub repo 名，建议 `hap-skill-<name>` 格式 | `hap-skill-crm-review` |
+| 分发 repo 名 | GitHub repo 名，建议 `<descriptive-name>` 格式（不必加 hap-skill 前缀） | `crm-project-review`、`crm_leads_sync` |
 | 一句话描述 | 含触发场景关键词 | "基于明道云知识库对 CRM 项目做结构化评审" |
 
 ### 2.2 HAP 应用信息
@@ -215,11 +215,11 @@ git init
 git add -A
 git commit -m "feat: initial release v1.0.0"
 git tag v1.0.0
-git remote add origin https://github.com/topmachinegun/hap-skill-<name>.git
+git remote add origin https://github.com/topmachinegun/<repo-name>.git
 git push -u origin main --tags
 ```
 
-告知用户：平台（OpenClaw 等）通过 `https://github.com/topmachinegun/hap-skill-<name>` 引用此技能。
+告知用户：平台（OpenClaw 等）通过 `https://github.com/topmachinegun/<repo-name>` 引用此技能。
 
 ## 5. 注意事项
 

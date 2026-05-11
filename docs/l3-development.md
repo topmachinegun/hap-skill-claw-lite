@@ -240,7 +240,7 @@ cp -r /path/to/hap-skill-claw-lite/skills/<name>/src/ .
 git add -A
 git commit -m "feat: initial release v1.0.0"
 git tag v1.0.0
-git remote add origin https://github.com/topmachinegun/hap-skill-<name>.git
+git remote add origin https://github.com/topmachinegun/<repo-name>.git
 git push -u origin main --tags
 ```
 
@@ -249,12 +249,14 @@ git push -u origin main --tags
 OpenClaw 等平台通过 GitHub URL 引用技能：
 
 ```
-https://github.com/topmachinegun/hap-skill-<name>
+https://github.com/topmachinegun/<repo-name>
 ```
+
+已有 L3 技能示例：`crm-project-review`、`crm_leads_sync`。
 
 ### 8.3 本仓库中的参考示例
 
-`skills/crm_project_review/` 作为 L3 参考示例留在本仓库，供开发新 L3 技能时参考。其分发版在独立 repo `hap-skill-crm-review`。
+`skills/crm_project_review/` 作为 L3 参考示例留在本仓库，供开发新 L3 技能时参考。其分发版在独立 repo `crm-project-review`。
 
 ## 9. 参考实现
 

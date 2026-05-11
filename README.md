@@ -99,7 +99,7 @@ hap-skill-claw-lite/
 
 - 开发规范：[docs/l3-development.md](docs/l3-development.md)
 - 脚手架工具：加载 `skills/hap-skill-creator` 后，AI 可自动生成新 L3 技能骨架
-- 参考示例：`skills/crm_project_review/`（分发版在独立 repo `hap-skill-crm-review`）
+- 参考示例：`skills/crm_project_review/`（分发版在独立 repo `crm-project-review`）
 - 分发：每个 L3 技能独立建 GitHub repo，平台（如 OpenClaw）直接通过 GitHub 拉取
 
 ## 相关技能
@@ -110,7 +110,8 @@ hap-skill-claw-lite/
 | `hap-v3-api` | V3 REST API 完整规范 | hap-app-access 通过引用补充 |
 | `hap-mcp-usage` | MCP 配置自动化安装 | 独立使用 |
 | `hap-token-broker` | L1 独立分发 repo | 从本仓库 `token-broker/` 手动同步 |
-| `hap-skill-crm-review` | crm_project_review 分发版 | 从本仓库参考示例衍生 |
+| `crm-project-review` | crm_project_review 分发版 | 从本仓库参考示例衍生 |
+| `crm_leads_sync` | CRM 线索同步（L3 业务技能） | 独立 L3 技能 |
 
 ## License
 
