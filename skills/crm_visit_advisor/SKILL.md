@@ -28,6 +28,7 @@ description: 基于「客户拜访技术」知识库，为 ClawCRM 项目生成�
 | 客户拜访技术 KB | `6a047c8820ab7dc22d1131d6` | 主检索源 |
 | 项目工作表 | `69ca1fb1d128aadb0c749d49`（项目管理） | 固定锚点 |
 | 访问模式 | `app_mcp`（无需 Bearer token，无过期问题） | 脚本直接构造 URL |
+| 写回字段 | `6a048e4e104f63109c08aa67`（「拜访准备」，Text/富文本） | 如不存在，提示用户手动创建 |
 
 ### 三层架构中的位置
 
@@ -43,18 +44,23 @@ description: 基于「客户拜访技术」知识库，为 ClawCRM 项目生成�
 - [ ] S4 构造 3 路检索词，并行查询「客户拜访技术」KB
 - [ ] S5 辅助检索「项目管理知识库」KB（阶段、ICP）
 - [ ] S6 结合项目上下文 + KB 命中，生成拜访建议 JSON
-- [ ] S7 Agent 按 §5 模板呈现建议
+- [ ] S7 Agent 按 §5 模板呈现建议，并写回「拜访准备」字段
 ```
 
 ### 便捷方式
 
 ```bash
+# 数据采集（生成 JSON，agent 据此写报告）
 python3 skills/crm_visit_advisor/src/advise_visit.py \
   --project "XYZ有限公司"
 
-# 可选场景
+# 指定场景
 python3 skills/crm_visit_advisor/src/advise_visit.py \
   --project "XYZ有限公司" --scene "方案演示"
+
+# 写回报告到「拜访准备」字段
+python3 skills/crm_visit_advisor/src/advise_visit.py \
+  --row-id <ROW_ID> --writeback-file /tmp/visit_report.md
 ```
 
 ## 4. 拜访场景指导（智能体使用）
@@ -125,10 +131,11 @@ python3 skills/crm_visit_advisor/src/advise_visit.py \
 
 ```json
 {
-  "project": { "rowId": "...", "title": "...", "stage": "...", "logs": [...] },
+  "project": { "rowId": "...", "title": "...", "logs": [...] },
   "visitHits": [{ "chunkId": "...", "content": "...", "score": 0.9, "query": "..." }],
   "projectHits": [{ "chunkId": "...", "content": "...", "score": 0.8, "query": "..." }],
   "scene": "初次拜访",
+  "writeback": { "fieldId": "6a048e4e104f63109c08aa67", "fieldName": "拜访准备" },
   "diagnostics": [...]
 }
 ```

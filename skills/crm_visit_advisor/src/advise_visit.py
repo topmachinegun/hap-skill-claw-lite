@@ -18,7 +18,8 @@
       "diagnostics": [...]
     }
 
-Agent 拿到 JSON 后，按 SKILL.md §5 模板生成拜访建议报告。
+Agent 拿到 JSON 后，按 SKILL.md §5 模板生成拜访建议报告，\
+然后调用 --writeback-file 写回「拜访准备」字段。
 """
 from __future__ import annotations
 import argparse
@@ -53,6 +54,7 @@ CLAWCRM_APP_ID = "3028926b11966404"
 KB_VISIT = "6a047c8820ab7dc22d1131d6"   # 客户拜访技术
 KB_PROJECT = "69ca75132970faa5ac6ce728"  # 项目管理知识库
 PROJECT_WS_ID = "69ca1fb1d128aadb0c749d49"
+WRITEBACK_FIELD_ID = "6a048e4e104f63109c08aa67"  # 拜访准备 (Text/富文本)
 
 
 def build_app_mcp_url(app_id: str) -> str | None:
@@ -181,7 +183,78 @@ def main() -> int:
     p.add_argument("--scene", help="拜访场景：初次拜访/方案演示/POC验证/高层拜访/复盘拜访")
     p.add_argument("--app-id", default=CLAWCRM_APP_ID)
     p.add_argument("--topk", type=int, default=6)
+    p.add_argument("--writeback-file",
+                   help="写回模式：读取该文件的 Markdown 内容写回「拜访准备」字段。必须配合 --row-id。")
+    p.add_argument("--writeback-field-id", default=WRITEBACK_FIELD_ID,
+                   help="拜访准备字段的 controlId")
     args = p.parse_args()
+
+    # ========== 写回模式 ==========
+    if args.writeback_file:
+        if not args.row_id:
+            print("ERROR: 写回模式必须同时提供 --row-id", file=sys.stderr)
+            return 2
+        try:
+            with open(args.writeback_file, "r", encoding="utf-8") as f:
+                content = f.read()
+        except OSError as e:
+            print(f"ERROR: 读取 writeback-file 失败: {e}", file=sys.stderr)
+            return 2
+        if not content.strip():
+            print("ERROR: writeback-file 内容为空，拒绝写回", file=sys.stderr)
+            return 2
+
+        mcp_url = build_app_mcp_url(args.app_id)
+        if not mcp_url:
+            return 2
+        cli = MCPClient(mcp_url, mode="app_mcp", app_id=args.app_id)
+        cli.ensure_initialized()
+
+        # 核对字段存在
+        struct = cli.call("get_worksheet_structure", {
+            "worksheet_id": PROJECT_WS_ID,
+            "appId": args.app_id,
+            "responseFormat": "json",
+            "ai_description": ai_desc("Verify visit preparation field before writeback"),
+        })
+        fields = struct.get("fields", []) if isinstance(struct, dict) else []
+        match = None
+        for f in fields:
+            fid = f.get("id") or f.get("controlId")
+            if fid == args.writeback_field_id:
+                match = f
+                break
+        if not match:
+            print(json.dumps({
+                "ok": False,
+                "reason": "「拜访准备」字段未在工作表结构中命中",
+                "tried_field_id": args.writeback_field_id,
+            }, ensure_ascii=False, indent=2))
+            return 1
+
+        resolved_id = match.get("id") or match.get("controlId") or args.writeback_field_id
+
+        upd = cli.call("update_record", {
+            "worksheet_id": PROJECT_WS_ID,
+            "row_id": args.row_id,
+            "appId": args.app_id,
+            "fields": [{"id": resolved_id, "value": content}],
+            "ai_description": ai_desc(
+                f"Write visit advice report into 拜访准备 field for record {args.row_id}"),
+        })
+
+        ok = (isinstance(upd, str) and upd == args.row_id) or \
+             (isinstance(upd, dict) and upd.get("success") is not False)
+        print(json.dumps({
+            "ok": ok,
+            "worksheetId": PROJECT_WS_ID,
+            "rowId": args.row_id,
+            "fieldId": resolved_id,
+            "fieldName": match.get("name"),
+            "charsWritten": len(content),
+        }, ensure_ascii=False, indent=2))
+        return 0 if ok else 1
+    # ========== 写回模式结束 ==========
 
     if not (args.project or args.row_id):
         print("ERROR: 必须提供 --project 或 --row-id", file=sys.stderr)
