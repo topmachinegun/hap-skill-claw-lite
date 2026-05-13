@@ -515,7 +515,7 @@ Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握�
 ```
 需要访问 HAP 应用数据
 │
-├─ 1. 查 .config/hap-skill-claw-lite/apps.toml
+├─ 1. 查 hap_app_access/apps.toml（与 SKILL.md 同目录）
 │   ├─ 有 appId 且配置了 appkey → Appkey+Sign（优先，权限更大）
 │   │   ├─ AI 对话操作 → MCP
 │   │   └─ 代码集成   → V3 API
@@ -529,7 +529,7 @@ Python `mcp` 包提供的 `streamablehttp_client` 只实现了基本的 SSE 握�
 
 > **核心原则**：Appkey+Sign 权限更大、不过期、可走 V3 API（pageSize 上限 1000），因此优先。OAuth MCP 是通用兜底方案。
 
-配置格式见 [config/apps.example.toml](../../config/apps.example.toml)，Python 读取见 [app_config.py](src/app_config.py)。
+配置格式见 [apps.example.toml](apps.example.toml)（同目录），Python 读取见 [app_config.py](src/app_config.py)。
 
 ---
 

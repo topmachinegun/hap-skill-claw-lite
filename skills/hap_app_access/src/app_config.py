@@ -1,4 +1,4 @@
-"""读取应用认证配置 (~/.config/hap-skill-claw-lite/apps.toml)
+"""读取应用认证配置（hap_app_access 目录下的 apps.toml）
 
 决策逻辑（§7）：
   apps.toml 有 appkey → Appkey+Sign（优先，权限更大）
@@ -17,7 +17,7 @@ from typing import Optional
 if sys.version_info < (3, 11):
     import tomli as tomllib  # type: ignore
 
-CONFIG_PATH = Path.home() / ".config" / "hap-skill-claw-lite" / "apps.toml"
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "apps.toml"
 
 
 @dataclass
