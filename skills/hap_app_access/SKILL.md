@@ -558,7 +558,6 @@ L2: skills/hap-app-access/ 本技能 — HAP 通用访问方法论 + 共享代�
          ▼
 L3: 独立 GitHub repo             业务技能（各自独立开发、独立分发）
     skills/crm_project_review/   参考示例（本仓库内，分发版在独立 repo）
-    skills/hap-skill-creator/    脚手架 skill
 ```
 
 | 层 | 职责 | 不做什么 |

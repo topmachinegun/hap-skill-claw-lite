@@ -262,4 +262,3 @@ https://github.com/topmachinegun/<repo-name>
 
 - [skills/crm_project_review/](../skills/crm_project_review/) — 完整的 L3 业务技能参考实现
 - [skills/hap_app_access/](../skills/hap_app_access/) — L2 基础技能，所有 L3 技能的依赖
-- `skills/hap-skill-creator/` — L3 脚手架 skill，可让 AI 自动生成新 L3 技能骨架
