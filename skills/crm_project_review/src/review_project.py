@@ -24,7 +24,8 @@
       "diagnostics": [ ...text... ]
     }
 
-Agent 拿到 JSON 后，按 SKILL.md §5 Rubric 生成报告；§8 Write-back。
+Agent 拿到 JSON 后，按 SKILL.md §5 Rubric 生成报告；
+然后用 --writeback-file 写回。写回时自动勾选「是否需要AI评估」并更新「最后评估时间」。
 """
 from __future__ import annotations
 import argparse
@@ -35,6 +36,7 @@ import sys
 import urllib.parse
 import urllib.request
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -91,6 +93,8 @@ DEFAULT_APP_ID = "49392ae2-6aa0-4d69-b5e7-57d4fe3fc98e"  # ClawCRM
 DEFAULT_KB_ID = "69ca75132970faa5ac6ce728"  # 项目管理知识库
 DEFAULT_PROJECT_WS = "69ca1fb1d128aadb0c749d49"  # 项目管理 工作表
 DEFAULT_WRITEBACK_CONTROLID = "69f956419f1956fc0e1867c3"  # AI评估 字段
+CHECK_NEED_AI_EVAL_ID = "6a0a8c0dbf6da4a6790db190"  # 是否需要AI评估 (Checkbox)
+LAST_EVAL_TIME_ID = "6a0a8c2a314b8166a324f6aa"  # 最后评估时间 (DateTime)
 
 
 # MCPClient 从 L2 hap-app-access 共享模块导入（见文件头部 import）
@@ -257,13 +261,18 @@ def main() -> int:
 
         resolved_cid = match.get("controlId") or match.get("id") or control_id
 
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         upd = cli.call("update_record", {
             "worksheet_id": ws_id,
             "row_id": args.row_id,
             "appId": args.app_id,
-            "fields": [{"id": resolved_cid, "value": content}],
+            "fields": [
+                {"id": resolved_cid, "value": content},                    # AI评估
+                {"id": CHECK_NEED_AI_EVAL_ID, "value": "1"},              # 是否需要AI评估
+                {"id": LAST_EVAL_TIME_ID, "value": now_str},              # 最后评估时间
+            ],
             "ai_description": ai_desc(
-                f"Worksheet: 项目管理, Record: {args.row_id}. Write AI review report into AI评估 field."),
+                f"Worksheet: 项目管理, Record: {args.row_id}. Write AI review report into AI评估 field, check 是否需要AI评估, update 最后评估时间."),
         })
 
         # update_record 成功时，cli.call() 剩下 data 层 = rowId 字符串；
@@ -641,6 +650,8 @@ def main() -> int:
             "logSourceField": log_source_field,
             "structure": {"controls": controls},
             "writeBackField": writeback_field,
+            "checkEvalField": {"controlId": CHECK_NEED_AI_EVAL_ID, "controlName": "是否需要AI评估"},
+            "lastEvalTimeField": {"controlId": LAST_EVAL_TIME_ID, "controlName": "最后评估时间"},
         },
         "queries": queries,
         "knowledgeHits": all_hits,

@@ -30,7 +30,7 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 | 知识库 ID | `69ca75132970faa5ac6ce728`（"项目管理知识库"） | 调用 `get_app_knowledge_list(appId)` 重新选择 |
 | 项目工作表 | `69ca1fb1d128aadb0c749d49`（项目管理） | 固定锚点；如被 org 改名，`get_app_worksheets_list` 里选 name 含「项目管理」的那张，**不得**选「日报管理」「沟通」等别的表 |
 | 跟进日志来源 | 两种合法形态之一：**(a)** 项目管理工作表里 `controlName` 含「日志」的字段；(**b)** 同 app 下独立工作表「项目日志」(默认 id `69ca1fc9d128aadb0c749edf`)，通过 `project[].sid == 主项目 rowId` 关联。**两者任一命中即可**，均为合法唯一数据源。 | 详见 §3.1 数据源纪律 |
-| 写回字段 | 默认 `ai_evaluation`（别名 `AI评估`） | 如不存在，提示用户；未经用户同意**不得**自动创建 |
+| 写回字段 | 默认 `ai_evaluation`（别名 `AI评估`）；执行完成后自动勾选「是否需要AI评估」并更新「最后评估时间」 | 如不存在，提示用户；未经用户同意**不得**自动创建 |
 
 ### 三层架构中的位置
 
@@ -77,7 +77,7 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 - [ ] S6 获取项目记录的跟进日志（全文 + 时间戳）
 - [ ] S7 从日志构造检索词；调用 knowledge_search（hybrid, topK=8）
 - [ ] S8 按固定评分标准（§5）生成评审报告
-- [ ] S9 将报告写回 AI评估 字段（字段不存在则跳过）
+- [ ] S9 将报告写回 AI评估 字段，同时勾选「是否需要AI评估」、更新「最后评估时间」
 - [ ] S10 向用户展示报告并确认写回成功
 ```
 
@@ -187,7 +187,10 @@ python3 skills/crm_project_review/src/review_project.py \
 ## 8. 写回策略
 
 1. 在项目工作表结构中定位 AI评估 字段的 `controlId`。
-2. 使用 `tools/list` 返回的正确 schema 调用 `update_record`。
+2. 使用 `tools/list` 返回的正确 schema 调用 `update_record`，**一次调用同时更新**：
+   - `AI评估`（`69f956419f1956fc0e1867c3`）— 评审报告正文
+   - `是否需要AI评估`（`6a0a8c0dbf6da4a6790db190`）— 勾选为 `"1"`
+   - `最后评估时间`（`6a0a8c2a314b8166a324f6aa`）— 当前时间戳 `YYYY-MM-DD HH:mm:ss`
 3. 字段不存在 → **不得**自动创建。告知用户如何手动添加。
 4. 写回失败时**不得**静默截断报告。
 
@@ -211,8 +214,11 @@ python3 skills/crm_project_review/src/review_project.py \
 
 ---
 
-**技能版本**：v3.1.0
+**技能版本**：v3.2.0
 **适用范围**：明道云 HAP（SaaS）
+
+**v3.2.0 变更**：
+- 评审写回时自动勾选「是否需要AI评估」并更新「最后评估时间」
 
 **v3.1.0 变更**：
 - L1 Token Broker 源码移出本仓库，token 由外部进程管理

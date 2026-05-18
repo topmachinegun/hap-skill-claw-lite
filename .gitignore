@@ -30,3 +30,4 @@ venv/
 
 # 日志
 *.log
+.cache/
