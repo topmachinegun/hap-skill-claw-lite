@@ -131,7 +131,8 @@ python3 skills/crm_project_review/src/review_project.py \
 
 ### 5.4 下一步动作 (Next Actions)
 - **锚点**：KB 中当前阶段的 SOP 动作 + 检测到的风险
-- **输出**：有序列表 `{action, owner_hint, deadline_hint, kb_reference_chunkId}`
+- **输出**：有序列表 `{action, deadline_hint, kb_reference_chunkId}`
+- **负责人**：所有动作的负责人默认为项目本身的负责人，不需要在报告中建议具体责任人
 
 ### 5.5 SOP 偏离度 (SOP Deviation)
 - **锚点**：日志中的已执行动作 vs KB 中该阶段的检查清单
@@ -172,7 +173,7 @@ python3 skills/crm_project_review/src/review_project.py \
 | ... | 高/中/低 | "..." |
 
 ## 4. 下一步动作（按优先级）
-1. {{action}} — 建议负责人：{{owner_hint}}，建议时限：{{deadline_hint}}
+1. {{action}} — 建议时限：{{deadline_hint}}
 
 ## 5. SOP 偏离度
 - 应做动作清单（KB）：{{expected_actions}}
@@ -214,8 +215,11 @@ python3 skills/crm_project_review/src/review_project.py \
 
 ---
 
-**技能版本**：v3.2.0
+**技能版本**：v3.3.0
 **适用范围**：明道云 HAP（SaaS）
+
+**v3.3.0 变更**：
+- 下一步动作不再建议具体责任人，所有行动负责人默认使用项目本身的负责人
 
 **v3.2.0 变更**：
 - 评审写回时自动勾选「是否需要AI评估」并更新「最后评估时间」
