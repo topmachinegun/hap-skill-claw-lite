@@ -1,0 +1,78 @@
+{
+  "worksheet": "okr_key_result",
+  "name": "关键结果 KR",
+  "description": "月度级关键结果，挂在 O 下",
+  "fields": [
+    {
+      "name": "KR 内容",
+      "alias": "kr_content",
+      "type": "Text",
+      "subType": 0,
+      "required": true,
+      "desc": "如 完成 20 次客户拜访"
+    },
+    {
+      "name": "所属目标",
+      "alias": "objective",
+      "type": "Relation",
+      "required": true,
+      "desc": "关联 目标 O"
+    },
+    {
+      "name": "目标值",
+      "alias": "target_value",
+      "type": "Number",
+      "subType": 0,
+      "required": true,
+      "desc": "如 20"
+    },
+    {
+      "name": "当前值",
+      "alias": "current_value",
+      "type": "Number",
+      "subType": 0,
+      "required": false,
+      "formula": true,
+      "desc": "=SUM(关联里程碑.完成值)，自动累加"
+    },
+    {
+      "name": "单位",
+      "alias": "unit",
+      "type": "Text",
+      "subType": 0,
+      "required": false,
+      "desc": "次 / % / 万元"
+    },
+    {
+      "name": "权重",
+      "alias": "weight",
+      "type": "Number",
+      "subType": 0,
+      "required": false,
+      "desc": "0~100，同 O 下权重和=100%"
+    },
+    {
+      "name": "完成度",
+      "alias": "completion",
+      "type": "Number",
+      "subType": 0,
+      "required": false,
+      "formula": true,
+      "desc": "=MIN(当前值/目标值*100, 100)，0 除保护"
+    },
+    {
+      "name": "所属月",
+      "alias": "month_cycle",
+      "type": "Relation",
+      "required": true,
+      "desc": "关联 OKR 周期（仅月度型）"
+    },
+    {
+      "name": "负责人",
+      "alias": "owner",
+      "type": "User",
+      "required": true,
+      "desc": "默认继承 O 的负责人"
+    }
+  ]
+}

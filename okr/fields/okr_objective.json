@@ -1,0 +1,48 @@
+{
+  "worksheet": "okr_objective",
+  "name": "目标 O",
+  "description": "季度级目标，一个季度 2-5 个 O",
+  "fields": [
+    {
+      "name": "目标内容",
+      "alias": "objective",
+      "type": "Text",
+      "subType": 1,
+      "required": true,
+      "desc": "如 提升客户拜访转化率"
+    },
+    {
+      "name": "所属周期",
+      "alias": "cycle",
+      "type": "Relation",
+      "required": true,
+      "desc": "关联 OKR 周期（仅季度型）"
+    },
+    {
+      "name": "负责人",
+      "alias": "owner",
+      "type": "User",
+      "required": true
+    },
+    {
+      "name": "完成度",
+      "alias": "progress",
+      "type": "Number",
+      "subType": 0,
+      "required": false,
+      "formula": true,
+      "desc": "=AVG(子KR.完成度)，自动计算"
+    },
+    {
+      "name": "状态",
+      "alias": "status",
+      "type": "Option",
+      "required": true,
+      "options": [
+        {"key": "active", "value": "进行中"},
+        {"key": "done", "value": "已完成"},
+        {"key": "abandoned", "value": "已放弃"}
+      ]
+    }
+  ]
+}

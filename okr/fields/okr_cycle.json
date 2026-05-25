@@ -1,0 +1,59 @@
+{
+  "worksheet": "okr_cycle",
+  "name": "OKR 周期",
+  "description": "管理季度和月度 OKR 周期",
+  "fields": [
+    {
+      "name": "周期名称",
+      "alias": "cycle_name",
+      "type": "Text",
+      "subType": 0,
+      "required": true,
+      "desc": "如 2026 Q2、2026-05"
+    },
+    {
+      "name": "周期类型",
+      "alias": "cycle_type",
+      "type": "Option",
+      "required": true,
+      "options": [
+        {"key": "month", "value": "月度"},
+        {"key": "quarter", "value": "季度"}
+      ],
+      "desc": "月度周期挂载 KR，季度周期挂载 O"
+    },
+    {
+      "name": "开始日期",
+      "alias": "start_date",
+      "type": "DateTime",
+      "subType": 2,
+      "required": true
+    },
+    {
+      "name": "结束日期",
+      "alias": "end_date",
+      "type": "DateTime",
+      "subType": 2,
+      "required": true
+    },
+    {
+      "name": "状态",
+      "alias": "status",
+      "type": "Option",
+      "required": true,
+      "options": [
+        {"key": "pending", "value": "未开始"},
+        {"key": "active", "value": "进行中"},
+        {"key": "closed", "value": "已完成"}
+      ]
+    },
+    {
+      "name": "成员",
+      "alias": "members",
+      "type": "User",
+      "required": false,
+      "multiple": true,
+      "desc": "本周期参与者"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "worksheet": "okr_milestone",
+  "name": "KR 里程碑",
+  "description": "每次 KR 推进记录一条，自动汇总到 KR.当前值",
+  "fields": [
+    {
+      "name": "所属 KR",
+      "alias": "key_result",
+      "type": "Relation",
+      "required": true,
+      "desc": "关联 关键结果 KR"
+    },
+    {
+      "name": "完成值",
+      "alias": "value",
+      "type": "Number",
+      "subType": 0,
+      "required": true,
+      "desc": "本次推进量，累加到 KR.当前值"
+    },
+    {
+      "name": "说明",
+      "alias": "description",
+      "type": "Text",
+      "subType": 1,
+      "required": false,
+      "desc": "推进描述"
+    },
+    {
+      "name": "完成时间",
+      "alias": "complete_time",
+      "type": "DateTime",
+      "subType": 2,
+      "required": true,
+      "desc": "默认创建日期"
+    },
+    {
+      "name": "提交人",
+      "alias": "submitter",
+      "type": "User",
+      "required": true,
+      "desc": "默认当前用户"
+    }
+  ]
+}
