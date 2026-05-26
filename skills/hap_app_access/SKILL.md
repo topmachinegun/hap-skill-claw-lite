@@ -80,26 +80,31 @@ url = get_mcp_url("claw-crm")            # -> "https://api2.mingdao.com/mcp?Auth
 
 ```python
 from skills.hap_app_access.src.mcp_client import MCPClient
+from skills.hap_app_access.src.token_reader import get_mcp_url
 
-client = MCPClient(mcp_url)
-await client.initialize()
+# Personal MCP: token 从 Broker 文件读取，URL 自带 Bearer 鉴权
+url = get_mcp_url("claw-crm")
+client = MCPClient(url, mode="personal_mcp", ai_description="查询项目记录")
+
+# 初始化 session（幂等）
+client.ensure_initialized()
 
 # 拉工具列表（参数命名以 schema 为 SSOT，见 §4.1）
-tools = await client.list_tools()
+tools = client.list_tools()
 
 # 调用工具
-result = await client.call_tool("get_record_list", {
+result = client.call("get_record_list", {
     "appId": "<appId>",
     "worksheet_id": "<worksheetId>",
     "pageSize": 50,
-    "ai_description": "query project records",
 })
 ```
 
 特性：
-- 自动处理 MCP session 管理（initialize → tools/list → tools/call）
+- **同步调用**（非 async），基于 `urllib` 裸 JSON-RPC POST，不依赖第三方 MCP SDK
+- `personal_mcp` 模式下自动注入 `appId` + `ai_description`（若构造时提供且 args 未覆盖）
+- `ensure_initialized()` 幂等，多次调用无副作用
 - 自动剥离 MCP content 包装，返回纯 `data`
-- 基于 urllib 裸 JSON-RPC POST，不依赖第三方 MCP SDK
 
 > **关键陷阱**：Python MCP SDK 的 `streamablehttp_client` 仅适用于 `get_time` 等简单工具调用。
 > 业务工具（`get_org_list`、`get_record_list`、`get_app_worksheets_list` 等）必须使用本模块的 `MCPClient`，
