@@ -22,11 +22,12 @@ license: MIT
 
 ### 0.1 Token 文件位置
 
-Token 文件存储在：
+Token 文件存储在（由 hap-token-broker 写入，本 skill 只读不写）：
 ```
-.local/share/hap-token-broker/tokens/<profile>.json          # 项目内优先
-~/.local/share/hap-token-broker/tokens/<profile>.json         # fallback
+~/.local/share/hap-token-broker/tokens/<profile>.json
 ```
+> 152 服务器上 broker 以 root 运行，实际路径为 `/root/.local/share/hap-token-broker/tokens/`。
+> 权限 0o600，读取需 sudo。
 
 ### 0.2 获取 Token URL
 
@@ -35,7 +36,7 @@ Token 文件存储在：
 python3 -c "
 import json
 from pathlib import Path
-rec = json.loads(Path('.local/share/hap-token-broker/tokens/claw-crm.json').read_text())
+rec = json.loads(Path.home() / '.local/share/hap-token-broker/tokens/claw-crm.json')
 print(rec['url'])
 "
 ```
@@ -138,9 +139,9 @@ url = get_mcp_url("claw-crm")
 ```
 
 行为：
-- 优先项目内 `.local/share/hap-token-broker/tokens/<profile>.json`，fallback `~/`
-- 文件不存在 → `TokenNotFoundError`
-- 不尝试自己刷新
+- 读取 `~/.local/share/hap-token-broker/tokens/<profile>.json`
+- 文件不存在 → `TokenNotFoundError`（不会尝试自己刷新）
+- 不管理、不刷新 token
 
 ---
 
