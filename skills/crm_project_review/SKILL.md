@@ -35,7 +35,7 @@ description: 基于明道云项目管理知识库，对 ClawCRM 项目记录进�
 ### 三层架构中的位置
 
 本 skill 位于 L3（业务技能层），依赖关系：
-- **L1 Token Broker**：提供 Token（源码在本仓库 `token-broker/`，运行时由外部 Broker 进程管理）
+- **L1 Token Broker**：提供 Token（运行时由全局 sync_broker 守护进程 (`~/.local/share/hap-token-broker/src/`) 管理，源码归档于本仓库 `token-broker/`）
 - **L2 hap-app-access**：提供访问方法论 + 共享 Python 模块（`skills/hap-app-access/`）
   - `token_reader.py`：读取 token 文件
   - `mcp_client.py`：MCP JSON-RPC 客户端

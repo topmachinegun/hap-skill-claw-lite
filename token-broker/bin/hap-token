@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-"""hap-token CLI 统一入口 —— symlink 目标。
+"""hap-token CLI 统一入口 —— 全局版本，不依赖任何工作区。
 
-本文件仅做路径解析，实际逻辑在 src/cli.py。
 用法: hap-token <subcommand> [...]
 """
 import sys
 from pathlib import Path
 
-# 将 src/ 加入 sys.path，使 cli.py 能 import config, refresher, storage
-_SRC = Path(__file__).resolve().parent.parent / "src"
+# 全局 token-broker src 目录
+_SRC = Path.home() / ".local" / "share" / "hap-token-broker" / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from cli import main
+from cli import main  # noqa: E402
 
 if __name__ == "__main__":
     sys.exit(main())
